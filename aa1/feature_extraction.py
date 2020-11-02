@@ -69,7 +69,7 @@ def extract_features(data:pd.DataFrame, max_sample_length:int, device, id2word):
         elif split == "TEST":
             test_sentences.append(sentence)
             
-        C=[-1,-1,-1,-1,-1]
+        C=[0,0,0,0,0]
         for x in train_sentences:
             for i in range(max_sample_length-len(x)):
                 x.append(C)
@@ -80,9 +80,9 @@ def extract_features(data:pd.DataFrame, max_sample_length:int, device, id2word):
             for i in range(max_sample_length-len(z)):
                 z.append(C)
     
-    train_sentences_tensor=torch.Tensor(train_sentences).to(device=device)
-    val_sentences_tensor=torch.Tensor(val_sentences).to(device=device)
-    test_sentences_tensor=torch.Tensor(test_sentences).to(device=device)
+    train_sentences_tensor=torch.LongTensor(train_sentences).to(device=device)
+    val_sentences_tensor=torch.LongTensor(val_sentences).to(device=device)
+    test_sentences_tensor=torch.LongTensor(test_sentences).to(device=device)
 
     output_data=[train_sentences_tensor, val_sentences_tensor, test_sentences_tensor]
     print("TRAIN Tensor Size:", train_sentences_tensor.size())

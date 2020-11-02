@@ -83,12 +83,16 @@ class DataLoader(DataLoaderBase):
         ner_df_rows = []
 
         vocab={}
-        ner_dict={'O': 0, 'drug': 1, 'group': 2, 'brand': 3, 'drug_n': 4}
+        ner_dict={'O': 1, 'drug': 2, 'group': 3, 'brand': 4, 'drug_n': 5}
 
         #parse xml
         path=[['TRAIN','*/*/*.xml'],['TEST','*/Test for DrugNER task/*/*.xml']]
+        times=0
         for path in path:
             for file in glob.iglob(os.path.join(data_dir, path[1])):
+                if times % 1 != 0:
+                    times+=1
+                    continue
                 with open(file) as f:
                     xtree = et.parse(f)
                     xroot = xtree.getroot()
@@ -130,7 +134,7 @@ class DataLoader(DataLoaderBase):
                                     ner_df_rows.append({"sentence_id": sentence_id, "ner_id": ner_id, 
                                         "char_start_id": char_start_id, "char_end_id": char_start_id + len(token),
                                         })
-
+                times+=1
         #create dataframe
         self.data_df = pd.DataFrame(data_df_rows, columns = data_df_cols)
         self.ner_df = pd.DataFrame(ner_df_rows, columns = ner_df_cols)
@@ -169,7 +173,7 @@ class DataLoader(DataLoaderBase):
                         label.append(l_row["ner_id"])
                         is_ner = True
                 if not is_ner:
-                    label.append(0)
+                    label.append(1)
 
               #Split
             split=s_tokens['split'].unique().tolist()[0]
@@ -201,9 +205,9 @@ class DataLoader(DataLoaderBase):
         #[x.extend((self.max_sample_length-len(x))*[-1]) for x in self.train_labels]
         #[x.extend((self.max_sample_length-len(x))*[-1]) for x in self.val_labels]
         #[x.extend((self.max_sample_length-len(x))*[-1]) for x in self.test_labels]
-        x=[(i + [-1] * self.max_sample_length)[:self.max_sample_length] for i in self.train_labels]
-        y=[(i + [-1] * self.max_sample_length)[:self.max_sample_length] for i in self.val_labels]
-        z=[(i + [-1] * self.max_sample_length)[:self.max_sample_length] for i in self.test_labels]
+        x=[(i + [0] * self.max_sample_length)[:self.max_sample_length] for i in self.train_labels]
+        y=[(i + [0] * self.max_sample_length)[:self.max_sample_length] for i in self.val_labels]
+        z=[(i + [0] * self.max_sample_length)[:self.max_sample_length] for i in self.test_labels]
         train_labels_tensor=torch.Tensor(x).to(device=self.device)
         val_labels_tensor=torch.Tensor(y).to(device=self.device)
         test_labels_tensor=torch.Tensor(z).to(device=self.device)
