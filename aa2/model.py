@@ -129,8 +129,8 @@ class MyClassifier2B(nn.Module):
         self.device=device
         
         super().__init__()
-        #self.lin1 = nn.Linear(input_size, hidden_dim)
-        self.lstm = nn.LSTM(input_size, hidden_size=hidden_dim,
+        self.lin1 = nn.Linear(input_size, hidden_dim)
+        self.lstm = nn.LSTM(hidden_dim, hidden_size=hidden_dim,
                             num_layers=num_layers,
                             batch_first=True, 
                             bidirectional=True,
@@ -139,20 +139,20 @@ class MyClassifier2B(nn.Module):
         #self.linear = nn.Linear(hidden_dim*2 if bidirectional else hidden_dim, output_dim)
         #self.dropout = nn.Dropout(0.2)
         self.linear = nn.Linear(hidden_dim*2, output_dim)
-        #self.softmax = nn.LogSoftmax(dim=2) 
+        self.softmax = nn.LogSoftmax(dim=2) 
 
     def forward(self, x):
-        #first = self.lin1(x)
+        out = self.lin1(x)
         h0 = torch.randn(self.num_layers*2, x.shape[0], self.hidden_dim)
         h0=h0.to(self.device)
         c0 = torch.randn(self.num_layers*2, x.shape[0], self.hidden_dim)
         c0=c0.to(self.device)
         
-        lstm_out, _ = self.lstm(x)
-        #dropout_out = self.dropout(lstm_out)
-        output = self.linear(lstm_out)
-        #output = self.softmax(output)
-        return output
+        out, _ = self.lstm(out)
+        #out = self.dropout(out)
+        out = self.linear(out)
+        out = self.softmax(out)
+        return out
     
 class MyClassifier3A(nn.Module):
     def __init__(   self, input_size, embedding_size, hidden_dim, output_size, num_layers, device,
@@ -209,7 +209,7 @@ class MyClassifier3B(nn.Module):
                            dropout = dropout if num_layers > 1 else 0,
                         )
         self.linear = nn.Linear(hidden_dim*2, output_size)
-        self.softmax = nn.LogSoftmax(dim=2) 
+        #self.softmax = nn.LogSoftmax(dim=2) 
 
     def forward(self, x):
         hidden = self.linear1(x)

@@ -70,8 +70,7 @@ class Trainer:
         #print("trainx_shape:", train_X.shape)
         #input_size = int(train_X.max()) + 1 
         
-        input_size = 7 # number of features
-
+        input_size = 5 # number of features
         output_dim = 6 # number of ner labels
         
         self.device = device
@@ -81,8 +80,8 @@ class Trainer:
         
         optimizer = optim.Adam(model.parameters(), lr=lr)
         #optimizer = optim.SGD(model.parameters(), lr=lr)
-        criterion = nn.CrossEntropyLoss()
-        #criterion = nn.NLLLoss()
+        #criterion = nn.CrossEntropyLoss()
+        criterion = nn.NLLLoss()
         
         print(model)
         print("Training... \n")
@@ -129,10 +128,10 @@ class Trainer:
                             y_label.append(label_true)
 
         scores = {}
-        print(max(y_label))
-        print(max(y_pred))
-        print(y_label[:50])
-        print(y_pred[:50])
+        #print(list(set(y_label)))
+        #print(list(set(y_pred)))
+        #print(y_label[:50])
+        #print(y_pred[:50])
         accuracy = accuracy_score(y_label, y_pred, normalize=True)
         scores['accuracy'] = accuracy
         recall = recall_score(y_label, y_pred, average='weighted')
@@ -144,16 +143,69 @@ class Trainer:
         scores['loss'] = int(tot_loss)
 
 
-        print('model:', model_name, 'Accuracy:', accuracy, 'Precision:', precision, 'Recall:', recall, 'F1_score:', f1)
+        print('Model:', model_name, 'Accuracy:', accuracy, 'Precision:', precision, 'Recall:', recall, 'F1_score:', f1)
 
         #print(f'Evaluation Finished\n')
-        #self.save_model(epochs, model, optimizer, tot_loss, scores, hyperparamaters, model_name)
+        self.save_model(epochs, model, optimizer, tot_loss, scores, hyperparamaters, model_name)
         
         pass
 
 
     def test(self, test_X, test_y, model_class, best_model_path):
         # Finish this function so that it loads a model, test is and print results.
+        loaded_model = self.load_model(best_model_path)
+        model_state_dict = loaded_model["model_state_dict"]
+        hyperparameters = loaded_model["hyperparamaters"] 
+        hyperparameters=hyperparameters
+        lr = hyperparameters["learning_rate"]
+        num_layers = hyperparameters["number_layers"]
+        dropout = hyperparameters["dropout"]
+        batch_size = hyperparameters["batch_size"]
+        epochs = hyperparameters["epochs"]
+        model_name = hyperparameters["model_name"]
+        hidden_dim = hyperparameters["hidden_size"]
+        embedding_dim = hyperparameters["embedding_dim"]
+        device = hyperparameters["device"]
+        #optimizer = hyperparamaters["optimizer"]
+        
+        input_size = 5
+        output_dim = 6
+        
+        model = model_class(input_size, embedding_dim, hidden_dim, output_dim, num_layers, device, dropout)
+        model.load_state_dict(model_state_dict)
+        model = model.to(device)
+        
+        model.eval()
+        y_label = []
+        y_pred = []
+        test_batches = Batcher(test_X, test_y, device, batch_size=batch_size, max_iter=1)
+        for split in test_batches:
+            for sent, label in split:
+                
+                with torch.no_grad():
+                    pred = model(sent.float().to(device))
+                    #print(pred)
+                    for i in range(pred.shape[0]):
+                        pred_sent = pred[i]
+                        label_sent = label[i]
+                        for j in range(len(pred_sent)):
+                            #print(pred_sent[j])
+                            pred_value = int(torch.argmax(pred_sent[j]))
+                            label_true = int(label_sent[j])
+                            
+                            y_pred.append(pred_value)
+                            y_label.append(label_true)
+
+        #print(list(set(y_label)))
+        #print(list(set(y_pred)))
+        #print(y_label[:50])
+        #print(y_pred[:50])
+        accuracy = accuracy_score(y_label, y_pred, normalize=True)
+        recall = recall_score(y_label, y_pred, average='weighted')
+        precision = precision_score(y_label, y_pred, average='weighted')
+        f1 = f1_score(y_pred, y_label, average='weighted')
+
+        print('Model:', model_name, 'Accuracy:', accuracy, 'Precision:', precision, 'Recall:', recall, 'F1_score:', f1)
         pass
 
     

@@ -32,7 +32,7 @@ def parallel_coordinates(save_dir, metric="loss"):
     y_dims = []
     for cname,cdata in df.iteritems():
         values = list(cdata.values)
-
+        
         add_text_ticks = False
         if isinstance(values[0], str):
             ticktexts = sorted(set(values))
